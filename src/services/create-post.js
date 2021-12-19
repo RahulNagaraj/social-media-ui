@@ -44,3 +44,14 @@ export const updateEmoji = async (id, data) => {
         return {};
     }
 };
+
+export const addComment = async (id, comment) => {
+    try {
+        const uri = `/posts/${id}/comment`;
+        const response = await API.post(uri, comment);
+        return response.data;
+    } catch (error) {
+        console.error("Error updating the emotion");
+        return {};
+    }
+};
