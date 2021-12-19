@@ -1,8 +1,10 @@
 import * as React from "react";
-import { Container, Box, Grid, TextField, Button } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { Container, Box, Grid, TextField, Button, Alert } from "@mui/material";
 import { createPost } from "../../services/create-post";
 
 const Create = () => {
+    const navigate = useNavigate();
     const handleSubmit = async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
@@ -20,6 +22,11 @@ const Create = () => {
             emojis: { favorites: 0, celebrate: 0, sad: 0 },
         };
         const response = await createPost(post);
+        if (response === "OK") {
+            navigate("/");
+        } else {
+            return <Alert severity="error">Error creating a Post</Alert>;
+        }
     };
 
     return (

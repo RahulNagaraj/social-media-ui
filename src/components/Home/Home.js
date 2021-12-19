@@ -20,13 +20,14 @@ import CommentIcon from "@mui/icons-material/Comment";
 
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import CelebrationIcon from "@mui/icons-material/Celebration";
-import LightbulbIcon from "@mui/icons-material/Lightbulb";
 import SentimentVeryDissatisfiedIcon from "@mui/icons-material/SentimentVeryDissatisfied";
 
 import { getAllPosts } from "../../services/get-posts";
+import { likePost, dislikePost, updateEmoji } from "../../services/create-post";
 
 const Home = () => {
     const [postsData, setPostsData] = React.useState({});
+    const [updateData, setUpdateData] = React.useState(false);
     React.useEffect(() => {
         async function fetchData() {
             const response = await getAllPosts();
@@ -34,6 +35,51 @@ const Home = () => {
         }
         fetchData();
     }, []);
+
+    React.useEffect(() => {
+        async function fetchData() {
+            const response = await getAllPosts();
+            setUpdateData(false);
+            setPostsData(response);
+        }
+        if (updateData) {
+            fetchData();
+        }
+    }, [updateData]);
+
+    const formatDate = (createdAt) => {
+        const date = new Date(createdAt);
+        const options = {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        };
+        return date.toLocaleDateString("en-US", options);
+    };
+
+    const like = async (key) => {
+        await likePost(postsData[key].id, postsData[key].votes.upVote + 1);
+        setUpdateData(true);
+    };
+
+    const dislike = async (key) => {
+        await dislikePost(postsData[key].id, postsData[key].votes.downVote + 1);
+        setUpdateData(true);
+    };
+
+    const emoji = async (key, type) => {
+        let data = { ...postsData[key].emojis };
+        const { favorites, celebrate, sad } = data;
+        if (type === "favorites") data = { ...data, favorites: favorites + 1 };
+        else if (type === "celebrate")
+            data = { ...data, celebrate: celebrate + 1 };
+        else if (type === "sad") data = { ...data, sad: sad + 1 };
+        console.log(data);
+        await updateEmoji(postsData[key].id, data);
+        setUpdateData(true);
+    };
+
     return (
         <Box>
             <Container sx={{ my: 1 }}>
@@ -55,10 +101,19 @@ const Home = () => {
                                                 </Avatar>
                                             }
                                             title={postsData[key].username}
-                                            subheader="September 14, 2016"
+                                            subheader={formatDate(
+                                                postsData[key].createdAt
+                                            )}
                                         />
 
                                         <CardContent>
+                                            <Typography
+                                                gutterBottom
+                                                variant="h5"
+                                                component="div"
+                                            >
+                                                {postsData[key].title}
+                                            </Typography>
                                             <Typography
                                                 variant="body2"
                                                 color="text.secondary"
@@ -73,16 +128,28 @@ const Home = () => {
                                                 <Box>
                                                     <IconButton
                                                         aria-label="like"
-                                                        size="large"
+                                                        onClick={() =>
+                                                            like(key)
+                                                        }
                                                     >
                                                         <ThumbUpIcon fontSize="inherit" />
                                                     </IconButton>
+                                                    {
+                                                        postsData[key].votes
+                                                            .upVote
+                                                    }
                                                     <IconButton
                                                         aria-label="dislike"
-                                                        size="large"
+                                                        onClick={() =>
+                                                            dislike(key)
+                                                        }
                                                     >
                                                         <ThumbDownIcon fontSize="inherit" />
                                                     </IconButton>
+                                                    {
+                                                        postsData[key].votes
+                                                            .downVote
+                                                    }
                                                 </Box>
                                             </Grid>
 
@@ -90,22 +157,43 @@ const Home = () => {
                                                 <Box>
                                                     <IconButton
                                                         aria-label="favorites"
-                                                        size="large"
+                                                        onClick={() =>
+                                                            emoji(
+                                                                key,
+                                                                "favorites"
+                                                            )
+                                                        }
                                                     >
                                                         <FavoriteIcon fontSize="inherit" />
                                                     </IconButton>
+                                                    {
+                                                        postsData[key].emojis
+                                                            .favorites
+                                                    }
                                                     <IconButton
                                                         aria-label="celebrate"
-                                                        size="large"
+                                                        onClick={() =>
+                                                            emoji(
+                                                                key,
+                                                                "celebrate"
+                                                            )
+                                                        }
                                                     >
                                                         <CelebrationIcon fontSize="inherit" />
                                                     </IconButton>
+                                                    {
+                                                        postsData[key].emojis
+                                                            .celebrate
+                                                    }
                                                     <IconButton
                                                         aria-label="sad"
-                                                        size="large"
+                                                        onClick={() =>
+                                                            emoji(key, "sad")
+                                                        }
                                                     >
                                                         <SentimentVeryDissatisfiedIcon fontSize="inherit" />
                                                     </IconButton>
+                                                    {postsData[key].emojis.sad}
                                                 </Box>
                                             </Grid>
                                         </Grid>
