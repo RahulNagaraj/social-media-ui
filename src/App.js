@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
-import Home from "./Home/Home";
-import Create from "./Create/Create";
+import Home from "./components/Home/Home";
+import Create from "./components/Create/Create";
 
 function App() {
     return (

@@ -5,7 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import CssBaseline from "@mui/material/CssBaseline";
 
 import reportWebVitals from "./reportWebVitals";
-import Header from "./Header/Header";
+import Header from "./components/Header/Header";
 
 ReactDOM.render(
     <React.StrictMode>
