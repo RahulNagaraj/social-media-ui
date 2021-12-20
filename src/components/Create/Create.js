@@ -1,11 +1,34 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
-import { Container, Box, Grid, TextField, Button, Alert } from "@mui/material";
+import {
+    Container,
+    Box,
+    Grid,
+    TextField,
+    Button,
+    Alert,
+    Snackbar,
+} from "@mui/material";
 import { createPost, uploadFile } from "../../services/create-post";
 
 const Create = () => {
-    const [filename, setFilename] = React.useState("");
     const navigate = useNavigate();
+    const [filename, setFilename] = React.useState("");
+    const [open, setOpen] = React.useState(false);
+    const [message, setMessage] = React.useState("");
+    const [severity, setSeverity] = React.useState("");
+
+    const handleClick = () => {
+        setOpen(true);
+    };
+
+    const handleClose = (event, reason) => {
+        if (reason === "clickaway") {
+            return;
+        }
+
+        setOpen(false);
+    };
 
     const handleFileChange = async (event) => {
         const files = event.target.files[0];
@@ -14,12 +37,24 @@ const Create = () => {
         const response = await uploadFile(formData);
         if (response.status === "OK") {
             setFilename(response.filename);
+            setMessage("Successfully uploaded image!");
+            setSeverity("success");
+            handleClick();
         }
     };
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
+        const title = data.get("title");
+        const username = data.get("username");
+        const content = data.get("content");
+        if (!title || !username || !content) {
+            setMessage("Please fill required fields");
+            setSeverity("error");
+            handleClick();
+            return;
+        }
         const media = data.get("media");
         const formData = new FormData();
         formData.append("file", media);
@@ -28,9 +63,9 @@ const Create = () => {
             createdAt: new Date(),
             updatedAt: new Date(),
             type: media.name !== "" ? "media" : "text",
-            username: data.get("username"),
-            title: data.get("title"),
-            content: data.get("content"),
+            username,
+            title,
+            content,
             votes: { upVote: 0, downVote: 0 },
             filename,
             comments: [],
@@ -114,6 +149,21 @@ const Create = () => {
                     </Button>
                 </Box>
             </Box>
+            {open && (
+                <Snackbar
+                    open={open}
+                    autoHideDuration={6000}
+                    onClose={handleClose}
+                >
+                    <Alert
+                        onClose={handleClose}
+                        severity={severity}
+                        sx={{ width: "100%" }}
+                    >
+                        {message}
+                    </Alert>
+                </Snackbar>
+            )}
         </Container>
     );
 };
