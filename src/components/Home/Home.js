@@ -24,6 +24,7 @@ import {
     ListItem,
     ListItemAvatar,
     ListItemText,
+    MenuItem,
 } from "@mui/material";
 import { red } from "@mui/material/colors";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
@@ -44,11 +45,23 @@ import {
 } from "../../services/create-post";
 import { SERVER_URI, DEV_SERVER_URI } from "../../services";
 
+const SORT = [
+    {
+        value: "upVotes",
+        label: "Up Votes",
+    },
+    {
+        value: "downVotes",
+        label: "Down Votes",
+    },
+];
+
 const Home = () => {
-    const [postsData, setPostsData] = React.useState({});
+    const [postsData, setPostsData] = React.useState([]);
     const [updateData, setUpdateData] = React.useState(false);
     const [open, setOpen] = React.useState(false);
     const [selectedPost, setSelectedPost] = React.useState({});
+    const [sortBy, setSortBy] = React.useState("upVotes");
 
     const scroll = "paper";
 
@@ -59,6 +72,24 @@ const Home = () => {
 
     const handleClose = () => {
         setOpen(false);
+    };
+
+    const handleSortBy = (e) => {
+        const value = e.target.value;
+        setSortBy(value);
+        const newArr = [...postsData];
+        let sorted = [];
+        if (value === "upVotes") {
+            sorted = newArr.sort(function (a, b) {
+                return b.votes.upVote - a.votes.upVote;
+            });
+        } else {
+            sorted = newArr.sort(function (a, b) {
+                return b.votes.downVote - a.votes.downVote;
+            });
+        }
+
+        setPostsData(sorted);
     };
 
     const descriptionElementRef = React.useRef(null);
@@ -138,129 +169,156 @@ const Home = () => {
     return (
         <Box sx={{ my: 1 }}>
             <Container>
+                <Box
+                    display="flex"
+                    justifyContent="flex-end"
+                    sx={{ maxWidth: 800, margin: "16px auto" }}
+                >
+                    <TextField
+                        id="sortBy"
+                        select
+                        label="Sort By"
+                        value={sortBy}
+                        onChange={handleSortBy}
+                    >
+                        {SORT.map((option) => (
+                            <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                </Box>
                 {Object.keys(postsData).map((key) => {
                     const imageURL = `${SERVER_URI}/getFile/${postsData[key].filename}`;
                     return (
-                        <Card
-                            key={key}
-                            sx={{ maxWidth: 800, margin: "16px auto" }}
-                        >
-                            <CardActionArea>
-                                <CardHeader
-                                    avatar={
-                                        <Avatar
-                                            sx={{ bgcolor: red[500] }}
-                                            aria-label="username"
-                                        >
-                                            {postsData[
-                                                key
-                                            ].username[0].toUpperCase()}
-                                        </Avatar>
-                                    }
-                                    title={postsData[key].username}
-                                    subheader={formatDate(
-                                        postsData[key].createdAt
-                                    )}
-                                />
-                                {postsData[key].type !== "text" && (
-                                    <CardMedia
-                                        component="img"
-                                        height="250"
-                                        image={imageURL}
-                                        alt="img"
+                        <>
+                            <Card
+                                key={key}
+                                sx={{ maxWidth: 800, margin: "16px auto" }}
+                            >
+                                <CardActionArea>
+                                    <CardHeader
+                                        avatar={
+                                            <Avatar
+                                                sx={{ bgcolor: red[500] }}
+                                                aria-label="username"
+                                            >
+                                                {postsData[
+                                                    key
+                                                ].username[0].toUpperCase()}
+                                            </Avatar>
+                                        }
+                                        title={postsData[key].username}
+                                        subheader={formatDate(
+                                            postsData[key].createdAt
+                                        )}
                                     />
-                                )}
-                                <CardContent>
-                                    <Typography
-                                        gutterBottom
-                                        variant="h5"
-                                        component="div"
-                                    >
-                                        {postsData[key].title}
-                                    </Typography>
-                                    <Typography
-                                        variant="body2"
-                                        color="text.secondary"
-                                    >
-                                        {postsData[key].content}
-                                    </Typography>
-                                </CardContent>
-                            </CardActionArea>
-                            <CardActions disableSpacing>
-                                <Grid container spacing={1}>
-                                    <Grid item md={4}>
-                                        <Box>
-                                            <IconButton
-                                                aria-label="like"
-                                                size="small"
-                                                onClick={() => like(key)}
-                                            >
-                                                <ThumbUpIcon fontSize="inherit" />
-                                            </IconButton>
-                                            {postsData[key].votes.upVote}
-                                            <IconButton
-                                                aria-label="dislike"
-                                                size="small"
-                                                onClick={() => dislike(key)}
-                                            >
-                                                <ThumbDownIcon fontSize="inherit" />
-                                            </IconButton>
-                                            {postsData[key].votes.downVote}
-                                        </Box>
-                                    </Grid>
+                                    {postsData[key].type !== "text" && (
+                                        <CardMedia
+                                            component="img"
+                                            height="250"
+                                            image={imageURL}
+                                            alt="img"
+                                        />
+                                    )}
+                                    <CardContent>
+                                        <Typography
+                                            gutterBottom
+                                            variant="h5"
+                                            component="div"
+                                        >
+                                            {postsData[key].title}
+                                        </Typography>
+                                        <Typography
+                                            variant="body2"
+                                            color="text.secondary"
+                                        >
+                                            {postsData[key].content}
+                                        </Typography>
+                                    </CardContent>
+                                </CardActionArea>
+                                <CardActions disableSpacing>
+                                    <Grid container spacing={1}>
+                                        <Grid item md={4}>
+                                            <Box>
+                                                <IconButton
+                                                    aria-label="like"
+                                                    size="small"
+                                                    onClick={() => like(key)}
+                                                >
+                                                    <ThumbUpIcon fontSize="inherit" />
+                                                </IconButton>
+                                                {postsData[key].votes.upVote}
+                                                <IconButton
+                                                    aria-label="dislike"
+                                                    size="small"
+                                                    onClick={() => dislike(key)}
+                                                >
+                                                    <ThumbDownIcon fontSize="inherit" />
+                                                </IconButton>
+                                                {postsData[key].votes.downVote}
+                                            </Box>
+                                        </Grid>
 
-                                    <Grid item md={2}>
-                                        <Box>
-                                            <IconButton
-                                                aria-label="like"
-                                                size="small"
-                                                onClick={() =>
-                                                    handleClickOpen(key)
-                                                }
-                                            >
-                                                <CommentIcon fontSize="inherit" />
-                                            </IconButton>
-                                            {postsData[key].comments.length}
-                                        </Box>
-                                    </Grid>
+                                        <Grid item md={2}>
+                                            <Box>
+                                                <IconButton
+                                                    aria-label="like"
+                                                    size="small"
+                                                    onClick={() =>
+                                                        handleClickOpen(key)
+                                                    }
+                                                >
+                                                    <CommentIcon fontSize="inherit" />
+                                                </IconButton>
+                                                {postsData[key].comments.length}
+                                            </Box>
+                                        </Grid>
 
-                                    <Grid item sm={6}>
-                                        <Box>
-                                            <IconButton
-                                                aria-label="favorites"
-                                                size="small"
-                                                onClick={() =>
-                                                    emoji(key, "favorites")
+                                        <Grid item sm={6}>
+                                            <Box>
+                                                <IconButton
+                                                    aria-label="favorites"
+                                                    size="small"
+                                                    onClick={() =>
+                                                        emoji(key, "favorites")
+                                                    }
+                                                >
+                                                    <FavoriteIcon fontSize="inherit" />
+                                                </IconButton>
+                                                {
+                                                    postsData[key].emojis
+                                                        .favorites
                                                 }
-                                            >
-                                                <FavoriteIcon fontSize="inherit" />
-                                            </IconButton>
-                                            {postsData[key].emojis.favorites}
-                                            <IconButton
-                                                aria-label="celebrate"
-                                                size="small"
-                                                onClick={() =>
-                                                    emoji(key, "celebrate")
+                                                <IconButton
+                                                    aria-label="celebrate"
+                                                    size="small"
+                                                    onClick={() =>
+                                                        emoji(key, "celebrate")
+                                                    }
+                                                >
+                                                    <CelebrationIcon fontSize="inherit" />
+                                                </IconButton>
+                                                {
+                                                    postsData[key].emojis
+                                                        .celebrate
                                                 }
-                                            >
-                                                <CelebrationIcon fontSize="inherit" />
-                                            </IconButton>
-                                            {postsData[key].emojis.celebrate}
-                                            <IconButton
-                                                aria-label="sad"
-                                                size="small"
-                                                onClick={() =>
-                                                    emoji(key, "sad")
-                                                }
-                                            >
-                                                <SentimentVeryDissatisfiedIcon fontSize="inherit" />
-                                            </IconButton>
-                                            {postsData[key].emojis.sad}
-                                        </Box>
+                                                <IconButton
+                                                    aria-label="sad"
+                                                    size="small"
+                                                    onClick={() =>
+                                                        emoji(key, "sad")
+                                                    }
+                                                >
+                                                    <SentimentVeryDissatisfiedIcon fontSize="inherit" />
+                                                </IconButton>
+                                                {postsData[key].emojis.sad}
+                                            </Box>
+                                        </Grid>
                                     </Grid>
-                                </Grid>
-                            </CardActions>
-                        </Card>
+                                </CardActions>
+                            </Card>
+                        </>
                     );
                 })}
                 {open && (
