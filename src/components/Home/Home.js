@@ -65,21 +65,19 @@ const Home = () => {
 
     const scroll = "paper";
 
-    const handleClickOpen = (key) => {
+    const handleClickOpen = (post) => {
         setOpen(true);
-        setSelectedPost(postsData[key]);
+        setSelectedPost(post);
     };
 
     const handleClose = () => {
         setOpen(false);
     };
 
-    const handleSortBy = (e) => {
-        const value = e.target.value;
-        setSortBy(value);
-        const newArr = [...postsData];
+    const customSort = (unsorted, sortBy = "upVotes") => {
+        const newArr = [...unsorted];
         let sorted = [];
-        if (value === "upVotes") {
+        if (sortBy === "upVotes") {
             sorted = newArr.sort(function (a, b) {
                 return b.votes.upVote - a.votes.upVote;
             });
@@ -88,6 +86,14 @@ const Home = () => {
                 return b.votes.downVote - a.votes.downVote;
             });
         }
+
+        return sorted;
+    };
+
+    const handleSortBy = (e) => {
+        const value = e.target.value;
+        setSortBy(value);
+        const sorted = customSort(postsData, value);
 
         setPostsData(sorted);
     };
@@ -105,7 +111,8 @@ const Home = () => {
     React.useEffect(() => {
         async function fetchData() {
             const response = await getAllPosts();
-            setPostsData(response);
+            const sorted = customSort(response);
+            setPostsData(sorted);
         }
         fetchData();
     }, []);
@@ -113,8 +120,9 @@ const Home = () => {
     React.useEffect(() => {
         async function fetchData() {
             const response = await getAllPosts();
+            const sorted = customSort(response);
             setUpdateData(false);
-            setPostsData(response);
+            setPostsData(sorted);
         }
         if (updateData) {
             fetchData();
@@ -145,24 +153,24 @@ const Home = () => {
         setUpdateData(true);
     };
 
-    const like = async (key) => {
-        await likePost(postsData[key].id, postsData[key].votes.upVote + 1);
+    const like = async (post) => {
+        await likePost(post.id, post.votes.upVote + 1);
         setUpdateData(true);
     };
 
-    const dislike = async (key) => {
-        await dislikePost(postsData[key].id, postsData[key].votes.downVote + 1);
+    const dislike = async (post) => {
+        await dislikePost(post.id, post.votes.downVote + 1);
         setUpdateData(true);
     };
 
-    const emoji = async (key, type) => {
-        let data = { ...postsData[key].emojis };
+    const emoji = async (post, type) => {
+        let data = { ...post.emojis };
         const { favorites, celebrate, sad } = data;
         if (type === "favorites") data = { ...data, favorites: favorites + 1 };
         else if (type === "celebrate")
             data = { ...data, celebrate: celebrate + 1 };
         else if (type === "sad") data = { ...data, sad: sad + 1 };
-        await updateEmoji(postsData[key].id, data);
+        await updateEmoji(post.id, data);
         setUpdateData(true);
     };
 
@@ -188,137 +196,125 @@ const Home = () => {
                         ))}
                     </TextField>
                 </Box>
-                {Object.keys(postsData).map((key) => {
-                    const imageURL = `${SERVER_URI}/getFile/${postsData[key].filename}`;
+                {postsData.map((post) => {
+                    const imageURL = `${SERVER_URI}/getFile/${post.filename}`;
                     return (
-                        <>
-                            <Card
-                                key={key}
-                                sx={{ maxWidth: 800, margin: "16px auto" }}
-                            >
-                                <CardActionArea>
-                                    <CardHeader
-                                        avatar={
-                                            <Avatar
-                                                sx={{ bgcolor: red[500] }}
-                                                aria-label="username"
-                                            >
-                                                {postsData[
-                                                    key
-                                                ].username[0].toUpperCase()}
-                                            </Avatar>
-                                        }
-                                        title={postsData[key].username}
-                                        subheader={formatDate(
-                                            postsData[key].createdAt
-                                        )}
+                        <Card
+                            key={post.id}
+                            sx={{ maxWidth: 800, margin: "16px auto" }}
+                        >
+                            <CardActionArea>
+                                <CardHeader
+                                    avatar={
+                                        <Avatar
+                                            sx={{ bgcolor: red[500] }}
+                                            aria-label="username"
+                                        >
+                                            {post.username[0].toUpperCase()}
+                                        </Avatar>
+                                    }
+                                    title={post.username}
+                                    subheader={formatDate(post.createdAt)}
+                                />
+                                {post.type !== "text" && (
+                                    <CardMedia
+                                        component="img"
+                                        height="250"
+                                        image={imageURL}
+                                        alt="img"
                                     />
-                                    {postsData[key].type !== "text" && (
-                                        <CardMedia
-                                            component="img"
-                                            height="250"
-                                            image={imageURL}
-                                            alt="img"
-                                        />
-                                    )}
-                                    <CardContent>
-                                        <Typography
-                                            gutterBottom
-                                            variant="h5"
-                                            component="div"
-                                        >
-                                            {postsData[key].title}
-                                        </Typography>
-                                        <Typography
-                                            variant="body2"
-                                            color="text.secondary"
-                                        >
-                                            {postsData[key].content}
-                                        </Typography>
-                                    </CardContent>
-                                </CardActionArea>
-                                <CardActions disableSpacing>
-                                    <Grid container spacing={1}>
-                                        <Grid item md={4}>
-                                            <Box>
-                                                <IconButton
-                                                    aria-label="like"
-                                                    size="small"
-                                                    onClick={() => like(key)}
-                                                >
-                                                    <ThumbUpIcon fontSize="inherit" />
-                                                </IconButton>
-                                                {postsData[key].votes.upVote}
-                                                <IconButton
-                                                    aria-label="dislike"
-                                                    size="small"
-                                                    onClick={() => dislike(key)}
-                                                >
-                                                    <ThumbDownIcon fontSize="inherit" />
-                                                </IconButton>
-                                                {postsData[key].votes.downVote}
-                                            </Box>
-                                        </Grid>
-
-                                        <Grid item md={2}>
-                                            <Box>
-                                                <IconButton
-                                                    aria-label="like"
-                                                    size="small"
-                                                    onClick={() =>
-                                                        handleClickOpen(key)
-                                                    }
-                                                >
-                                                    <CommentIcon fontSize="inherit" />
-                                                </IconButton>
-                                                {postsData[key].comments.length}
-                                            </Box>
-                                        </Grid>
-
-                                        <Grid item sm={6}>
-                                            <Box>
-                                                <IconButton
-                                                    aria-label="favorites"
-                                                    size="small"
-                                                    onClick={() =>
-                                                        emoji(key, "favorites")
-                                                    }
-                                                >
-                                                    <FavoriteIcon fontSize="inherit" />
-                                                </IconButton>
-                                                {
-                                                    postsData[key].emojis
-                                                        .favorites
-                                                }
-                                                <IconButton
-                                                    aria-label="celebrate"
-                                                    size="small"
-                                                    onClick={() =>
-                                                        emoji(key, "celebrate")
-                                                    }
-                                                >
-                                                    <CelebrationIcon fontSize="inherit" />
-                                                </IconButton>
-                                                {
-                                                    postsData[key].emojis
-                                                        .celebrate
-                                                }
-                                                <IconButton
-                                                    aria-label="sad"
-                                                    size="small"
-                                                    onClick={() =>
-                                                        emoji(key, "sad")
-                                                    }
-                                                >
-                                                    <SentimentVeryDissatisfiedIcon fontSize="inherit" />
-                                                </IconButton>
-                                                {postsData[key].emojis.sad}
-                                            </Box>
-                                        </Grid>
+                                )}
+                                <CardContent>
+                                    <Typography
+                                        gutterBottom
+                                        variant="h5"
+                                        component="div"
+                                    >
+                                        {post.title}
+                                    </Typography>
+                                    <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                    >
+                                        {post.content}
+                                    </Typography>
+                                </CardContent>
+                            </CardActionArea>
+                            <CardActions disableSpacing>
+                                <Grid container spacing={1}>
+                                    <Grid item md={4}>
+                                        <Box>
+                                            <IconButton
+                                                aria-label="like"
+                                                size="small"
+                                                onClick={() => like(post)}
+                                            >
+                                                <ThumbUpIcon fontSize="inherit" />
+                                            </IconButton>
+                                            {post.votes.upVote}
+                                            <IconButton
+                                                aria-label="dislike"
+                                                size="small"
+                                                onClick={() => dislike(post)}
+                                            >
+                                                <ThumbDownIcon fontSize="inherit" />
+                                            </IconButton>
+                                            {post.votes.downVote}
+                                        </Box>
                                     </Grid>
-                                </CardActions>
-                            </Card>
-                        </>
+
+                                    <Grid item md={2}>
+                                        <Box>
+                                            <IconButton
+                                                aria-label="like"
+                                                size="small"
+                                                onClick={() =>
+                                                    handleClickOpen(post)
+                                                }
+                                            >
+                                                <CommentIcon fontSize="inherit" />
+                                            </IconButton>
+                                            {post.comments.length}
+                                        </Box>
+                                    </Grid>
+
+                                    <Grid item sm={6}>
+                                        <Box>
+                                            <IconButton
+                                                aria-label="favorites"
+                                                size="small"
+                                                onClick={() =>
+                                                    emoji(post, "favorites")
+                                                }
+                                            >
+                                                <FavoriteIcon fontSize="inherit" />
+                                            </IconButton>
+                                            {post.emojis.favorites}
+                                            <IconButton
+                                                aria-label="celebrate"
+                                                size="small"
+                                                onClick={() =>
+                                                    emoji(post, "celebrate")
+                                                }
+                                            >
+                                                <CelebrationIcon fontSize="inherit" />
+                                            </IconButton>
+                                            {post.emojis.celebrate}
+                                            <IconButton
+                                                aria-label="sad"
+                                                size="small"
+                                                onClick={() =>
+                                                    emoji(post, "sad")
+                                                }
+                                            >
+                                                <SentimentVeryDissatisfiedIcon fontSize="inherit" />
+                                            </IconButton>
+                                            {post.emojis.sad}
+                                        </Box>
+                                    </Grid>
+                                </Grid>
+                            </CardActions>
+                        </Card>
                     );
                 })}
                 {open && (

@@ -13,7 +13,6 @@ const Create = () => {
         formData.append("file", files);
         const response = await uploadFile(formData);
         if (response.status === "OK") {
-            console.log("successfully uploaded");
             setFilename(response.filename);
         }
     };
