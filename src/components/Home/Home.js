@@ -139,7 +139,7 @@ const Home = () => {
         <Box sx={{ my: 1 }}>
             <Container>
                 {Object.keys(postsData).map((key) => {
-                    const imageURL = `${DEV_SERVER_URI}/getFile/${postsData[key].filename}`;
+                    const imageURL = `${SERVER_URI}/getFile/${postsData[key].filename}`;
                     return (
                         <Card
                             key={key}
