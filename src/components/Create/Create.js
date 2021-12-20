@@ -1,14 +1,29 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { Container, Box, Grid, TextField, Button, Alert } from "@mui/material";
-import { createPost } from "../../services/create-post";
+import { createPost, uploadFile } from "../../services/create-post";
 
 const Create = () => {
+    const [filename, setFilename] = React.useState("");
     const navigate = useNavigate();
+
+    const handleFileChange = async (event) => {
+        const files = event.target.files[0];
+        const formData = new FormData();
+        formData.append("file", files);
+        const response = await uploadFile(formData);
+        if (response.status === "OK") {
+            console.log("successfully uploaded");
+            setFilename(response.filename);
+        }
+    };
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
         const media = data.get("media");
+        const formData = new FormData();
+        formData.append("file", media);
         const post = {
             id: `post:${new Date().getTime()}`,
             createdAt: new Date(),
@@ -18,6 +33,7 @@ const Create = () => {
             title: data.get("title"),
             content: data.get("content"),
             votes: { upVote: 0, downVote: 0 },
+            filename,
             comments: [],
             emojis: { favorites: 0, celebrate: 0, sad: 0 },
         };
@@ -82,9 +98,10 @@ const Create = () => {
                                 name="media"
                                 type="file"
                                 inputProps={{
-                                    accept: "image/*, video/*",
+                                    accept: "image/*",
                                 }}
                                 id="media"
+                                onChange={handleFileChange}
                             />
                         </Grid>
                     </Grid>

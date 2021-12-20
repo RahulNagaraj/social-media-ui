@@ -51,7 +51,28 @@ export const addComment = async (id, comment) => {
         const response = await API.post(uri, comment);
         return response.data;
     } catch (error) {
-        console.error("Error updating the emotion");
+        console.error("Error adding a comment");
+        return {};
+    }
+};
+
+export const uploadFile = async (formData) => {
+    try {
+        const uri = `/upload`;
+        const response = await API.post(uri, formData);
+        return response.data;
+    } catch (error) {
+        console.error("Error uploading image");
+        return {};
+    }
+};
+
+export const getFile = async (id) => {
+    try {
+        const uri = `/getFile/${id}`;
+        return await API.get(uri);
+    } catch (error) {
+        console.error("Error downloading image");
         return {};
     }
 };
